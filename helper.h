@@ -5,16 +5,31 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <bits/stdc++.h> // std::sort
+#include <chrono>
+
+struct item {
+    int label;
+    int value;
+    int weight;
+    std::map<item*, int> penalties; // (label, penalty)
+};
 
 struct file_records {
     int num_items;
     int knapsack_capacity;
-    std::vector<int> value;
-    std::vector<int> weight;
-    std::vector<std::vector<std::pair<int, int>>> penalties; // Usando uma lista de adjacência para as penalidades
+    std::vector<item> items;
 };
 
+
 file_records read_entry_file(std::string);
-void log_dataset(file_records);
+void log_dataset(file_records*);
+
+float calculate_penalties(std::vector<item>*, std::vector<int>*, int);
+
+std::vector<int> constructive(file_records*);
+
+int avaliation(std::vector<int>*, file_records*);
+// std::vector<int> simulated_annealing(file_records&);
 
 #endif
