@@ -1,5 +1,7 @@
 #include "helper.h"
 
+using namespace std;
+
 int main() {
 
     // Read files
@@ -8,13 +10,20 @@ int main() {
     log_dataset(&dataset);
     
     // Generate first solution
-    std::vector<int> solution = constructive(&dataset);
+    vector<int> solution = constructive(&dataset);
     
     // Avaliate solution
-    int score = avaliation(&solution, &dataset);
+    int score = avaliate_solution(&solution, &dataset);
 
     // // Print solution result
-    // std::cout<<"Total Value: "<<score<<"$"<<std::endl;
-
+    cout<<"Total Value: R$"<<score<<endl;
+    
+    vector<int> neighbor = generate_neighbor(&solution, &dataset);
+    for(int i=0; i < 10; i++){
+        cout << "Neighbor Value: R$" << avaliate_solution(&neighbor, &dataset) << endl;
+        neighbor = generate_neighbor(&neighbor, &dataset);
+    }
+    
+    
     return 0;
 }

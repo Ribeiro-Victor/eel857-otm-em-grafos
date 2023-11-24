@@ -29,7 +29,8 @@ float calculate_penalties(std::vector<item>*, std::vector<int>*, int);
 
 std::vector<int> constructive(file_records*);
 
-int avaliation(std::vector<int>*, file_records*);
+int avaliate_solution(std::vector<int>*, file_records*);
+std::vector<int> generate_neighbor(std::vector<int>*, file_records*);
 // std::vector<int> simulated_annealing(file_records&);
 
 #endif

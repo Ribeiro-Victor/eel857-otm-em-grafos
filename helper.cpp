@@ -2,6 +2,13 @@
 
 using namespace std;
 
+bool DEBUG_ENABLED = false;
+
+void debug_msg(const string& message){
+    if (DEBUG_ENABLED)
+        cout << message << endl;
+}
+
 file_records read_entry_file(string filename){
     ifstream file(filename); 
     if (!file.is_open()) {
@@ -66,28 +73,28 @@ void log_dataset(file_records* dataset){
 float calculate_penalties(vector<item>* items, vector<int>* solution, int item_index) {
     // If solution is empty
     if (item_index == 0) {
-        cout<<"        Solution is empty. Penalty = 0."<<endl;
+        debug_msg("        Solution is empty. Penalty = 0.");
         return 0;
     }
 
     // Initialize variables
     vector<pair<int, int>> penalties = items->at(item_index).penalties;
     float sum = 0;
-    cout<<items->at(item_index).label<<endl;
+    debug_msg(to_string(items->at(item_index).label));
     
     // If the item has no pairs with penalties
     if (penalties.size()==0)
-        cout<<"        Item "<<item_index<<" doesn't have penalty pairs."<<endl;
+        debug_msg("        Item " + to_string(item_index) + " doesn't have penalty pairs.");
     
     for (auto pair: penalties) {
-        cout<<pair.first<<endl;
+        debug_msg(to_string(pair.first));
         if (solution->at(pair.first) == 0)
-            cout<<"        Item "<<pair.first<<" is NOT in the solution."<<endl;
+            debug_msg("        Item " + to_string(pair.first) + " is NOT in the solution.");
         else {
-            cout<<"        Item "<<pair.first<<" is in the solution and it's penalty with item"<<item_index<<" is: "<<pair.second<<endl;
+            debug_msg("        Item " + to_string(pair.first) + " is in the solution and it's penalty with item "
+            + to_string(item_index) + " is: " + to_string(pair.second));
             sum += pair.second;
         }
-        cout<<"Debug"<<endl;
         
     }
     return sum;
@@ -106,8 +113,9 @@ vector<int> constructive(file_records* dataset){
     int current_knapsack_weight = 0;
 
     // Log
-    cout<<"Items: "<<dataset->num_items<<endl;
-    cout<<"Knapsack capacity: "<<dataset->knapsack_capacity<<endl;
+    debug_msg("********** CONSTRUCTIVE FUNCTION **********");
+    debug_msg("Items: " + to_string(dataset->num_items));
+    debug_msg("Knapsack capacity: " + dataset->knapsack_capacity);
 
     // 
     vector<item> items = dataset->items;
@@ -116,32 +124,34 @@ vector<int> constructive(file_records* dataset){
     // Calculate ratio value/weight
     for (int i=0; i<items.size(); i++) {
         // If the item fits in the knapsack
-        cout<<"Item: "<<i<<endl;
-        cout<<"    Current knapsack weight: "<<current_knapsack_weight<<endl;
-        cout<<"    Item weight: "<<items[i].weight<<endl;
+        debug_msg("Item: " + to_string(i));
+        debug_msg("    Current knapsack weight: " + to_string(current_knapsack_weight));
+        debug_msg("    Item weight: " + to_string(items[i].weight));
         if(current_knapsack_weight + items[i].weight <= dataset->knapsack_capacity) {
             // Calculate the item score
             float score = (items[i].value - calculate_penalties(&items, &solution, i))/items[i].weight;
-            cout<<"    Calculate item "<<i<<" score:"<<score<<endl;
+            debug_msg("    Calculate item " + to_string(i) + " score:" + to_string(score));
             
             // Include item in the solution
             if (score > 0) { //TODO: Incluir mais condições
-                cout<<"    Include item "<<i<<" in the solution."<<endl;
+                debug_msg("    Include item " + to_string(i) + " in the solution.");
                 solution[items[i].label] = 1;
                 current_knapsack_weight += items[i].weight;
             }
             // Print solution
-            cout<<"    Solution = [";
-            for (int i=0; i<solution.size(); i++)
-                cout<<solution[i];
-            cout<<"]"<<endl;
+            if(DEBUG_ENABLED){
+                cout<<"    Solution = [";
+                for (int i=0; i<solution.size(); i++)
+                    cout<<solution[i];
+                cout<<"]"<<endl;
+            }
         }
     }
     return solution;
 }
 
-int avaliation(vector<int>* solution, file_records* dataset) {
-    cout<<"Avaliation"<<endl;
+int avaliate_solution(vector<int>* solution, file_records* dataset) {
+    debug_msg("********** AVALIATION FUNCTION **********");
     int sum = 0;
     for (int i=0; i < solution->size(); i++) {
         if (solution->at(i) == 1) {
@@ -153,7 +163,63 @@ int avaliation(vector<int>* solution, file_records* dataset) {
             sum += dataset->items[i].value - total_penalty;
         }
     }
-
-    cout<<"Score: "<<sum<<endl;
     return sum;
+}
+
+int get_solution_weight(vector<int>* solution, file_records* dataset){
+    int total_weight = 0;
+    for(int i = 0; i < dataset->num_items; i++){
+        total_weight += solution->at(i) * dataset->items[i].weight;
+    }
+    return total_weight;
+} 
+
+vector<int> generate_neighbor(vector<int>* solution, file_records* dataset){
+    //Generate a viable solution by swapping two itens in backpack
+    debug_msg("********** GENERATE NEIGHBOR FUNCTION **********");
+    srand((unsigned) time(NULL));
+    int max_iter = 10000;
+
+    int n = solution->size();
+    vector<int> new_solution;
+    // copy(solution->begin(), solution->end(), back_inserter(new_solution));
+    new_solution = *solution;
+
+    int iter = 0;
+    while(iter < max_iter){
+        int i = rand() % n, j = rand() % n;
+        // cout << "i, j: " << i << "," << j << endl; 
+        if(solution->at(i) != solution->at(j)){ //Check if we're swapping itens
+            // cout << "Swap ok!" << endl;
+            // copy(solution->begin(), solution->end(), back_inserter(new_solution));
+            new_solution = *solution;
+            new_solution[i] = !new_solution[i];
+            new_solution[j] = !new_solution[j];
+            // cout<<"    Old Solution = [";
+                // for (int i=0; i<solution->size(); i++)
+                    // cout<<solution->at(i);
+                // cout<<"]"<<endl;
+            // cout<<"    New Solution = [";
+                // for (int i=0; i<new_solution.size(); i++)
+                    // cout<<new_solution[i];
+                // cout<<"]"<<endl;
+
+            if(get_solution_weight(&new_solution, dataset) <= dataset->knapsack_capacity){ //Check if new solution is viable
+                int old_score = avaliate_solution(solution, dataset);
+                // cout << "calculei um score" << endl;
+                
+                int new_score = avaliate_solution(&new_solution, dataset);
+                // cout << "calculei dois scores" << endl;
+                if (old_score < new_score)// Check if new solution is better
+                    return new_solution;
+            }else{
+                // copy(solution->begin(), solution->end(), back_inserter(new_solution));
+                new_solution = *solution;
+            }
+        }
+        iter++;
+    }
+
+    return new_solution;
+
 }
