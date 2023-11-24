@@ -27,14 +27,11 @@ file_records read_entry_file(string filename){
     for (int i = 0; i < num_penalties; i++) {
         int temp1, penalty, temp2, item_1, item_2; //temp1 e temp2 são descartados
         file >> temp1 >> penalty >> temp2 >> item_1 >> item_2;
-        
-        
-        items[item_1].penalties[&items[item_2]] = penalty;
-        items[item_2].penalties[&items[item_1]] = penalty;
+        items[item_1].penalties.push_back(make_pair(item_2, penalty));
+        items[item_2].penalties.push_back(make_pair(item_1, penalty));
     }
 
     file.close();
-
     file_records result = {num_items, knapsack_capacity, items};
     return result;
 }
@@ -56,7 +53,7 @@ void log_dataset(file_records* dataset){
         cout << "Penalties for item " << i << " -> [";
         int count = 0;
         for (auto pair : dataset->items[i].penalties) {
-            cout << "(" << pair.first->label << ", " << pair.second << ")";
+            cout << "(" << pair.first << ", " << pair.second << ")";
             count ++;
             if (count < dataset->items[i].penalties.size())
                 cout << ", ";
@@ -74,7 +71,7 @@ float calculate_penalties(vector<item>* items, vector<int>* solution, int item_i
     }
 
     // Initialize variables
-    map<item*, int> penalties = items->at(item_index).penalties;
+    vector<pair<int, int>> penalties = items->at(item_index).penalties;
     float sum = 0;
     cout<<items->at(item_index).label<<endl;
     
@@ -83,11 +80,11 @@ float calculate_penalties(vector<item>* items, vector<int>* solution, int item_i
         cout<<"        Item "<<item_index<<" doesn't have penalty pairs."<<endl;
     
     for (auto pair: penalties) {
-        cout<<pair.first->label<<endl;
-        if (solution->at(pair.first->label) == 0)
-            cout<<"        Item "<<pair.first->label<<" is NOT in the solution."<<endl;
+        cout<<pair.first<<endl;
+        if (solution->at(pair.first) == 0)
+            cout<<"        Item "<<pair.first<<" is NOT in the solution."<<endl;
         else {
-            cout<<"        Item "<<pair.first->label<<" is in the solution and it's penalty with item"<<item_index<<" is: "<<pair.second<<endl;
+            cout<<"        Item "<<pair.first<<" is in the solution and it's penalty with item"<<item_index<<" is: "<<pair.second<<endl;
             sum += pair.second;
         }
         cout<<"Debug"<<endl;
@@ -148,7 +145,12 @@ int avaliation(vector<int>* solution, file_records* dataset) {
     int sum = 0;
     for (int i=0; i < solution->size(); i++) {
         if (solution->at(i) == 1) {
-            sum += dataset->items[i].value - calculate_penalties(&dataset->items, solution, i);
+            int total_penalty = 0;
+            for (auto pair: dataset->items[i].penalties){
+                if (pair.first < i && solution->at(pair.first) == 1)
+                    total_penalty += pair.second;
+            }
+            sum += dataset->items[i].value - total_penalty;
         }
     }
 

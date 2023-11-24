@@ -12,7 +12,7 @@ struct item {
     int label;
     int value;
     int weight;
-    std::map<item*, int> penalties; // (label, penalty)
+    std::vector<std::pair<int, int>> penalties; // (label, penalty)
 };
 
 struct file_records {
