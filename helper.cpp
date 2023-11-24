@@ -182,38 +182,23 @@ vector<int> generate_neighbor(vector<int>* solution, file_records* dataset){
 
     int n = solution->size();
     vector<int> new_solution;
-    // copy(solution->begin(), solution->end(), back_inserter(new_solution));
     new_solution = *solution;
 
     int iter = 0;
     while(iter < max_iter){
         int i = rand() % n, j = rand() % n;
-        // cout << "i, j: " << i << "," << j << endl; 
         if(solution->at(i) != solution->at(j)){ //Check if we're swapping itens
-            // cout << "Swap ok!" << endl;
-            // copy(solution->begin(), solution->end(), back_inserter(new_solution));
             new_solution = *solution;
             new_solution[i] = !new_solution[i];
             new_solution[j] = !new_solution[j];
-            // cout<<"    Old Solution = [";
-                // for (int i=0; i<solution->size(); i++)
-                    // cout<<solution->at(i);
-                // cout<<"]"<<endl;
-            // cout<<"    New Solution = [";
-                // for (int i=0; i<new_solution.size(); i++)
-                    // cout<<new_solution[i];
-                // cout<<"]"<<endl;
+
 
             if(get_solution_weight(&new_solution, dataset) <= dataset->knapsack_capacity){ //Check if new solution is viable
                 int old_score = avaliate_solution(solution, dataset);
-                // cout << "calculei um score" << endl;
-                
                 int new_score = avaliate_solution(&new_solution, dataset);
-                // cout << "calculei dois scores" << endl;
                 if (old_score < new_score)// Check if new solution is better
                     return new_solution;
             }else{
-                // copy(solution->begin(), solution->end(), back_inserter(new_solution));
                 new_solution = *solution;
             }
         }
