@@ -43,6 +43,38 @@ file_records read_entry_file(string filename){
     return result;
 }
 
+unordered_map<string, string> read_config_file(const string& filename) {
+    unordered_map<string, string> config;
+
+    ifstream configFile(filename);
+
+    if (!configFile.is_open()) {
+        cerr << "Error opening config file: " << filename << endl;
+        return config;
+    }
+
+    string line;
+    while (getline(configFile, line)) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+
+        istringstream iss(line);
+        string key, value;
+        if (getline(iss, key, '=') && getline(iss, value)) {
+            key.erase(0, key.find_first_not_of(" \t"));
+            key.erase(key.find_last_not_of(" \t") + 1);
+            value.erase(0, value.find_first_not_of(" \t"));
+            value.erase(value.find_last_not_of(" \t") + 1);
+            config[key] = value;
+        }
+    }
+
+    configFile.close();
+
+    return config;
+}
+
 void log_dataset(file_records* dataset){
     
     cout << "Number of itens: " << dataset->num_items << endl; 
@@ -207,4 +239,40 @@ vector<int> generate_neighbor(vector<int>* solution, file_records* dataset){
 
     return new_solution;
 
+}
+
+vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, file_records* dataset){
+    vector<int> curr_solution = constructive(dataset); // curr_solution = s'
+    cout<<"Initial solution: R$"<< avaliate_solution(&curr_solution, dataset) <<endl;
+    vector<int> best_solution = curr_solution; // best_solution = s*
+
+    int iter = 0;
+    int t = t_0;
+    vector<int> new_solution;
+    srand((unsigned) time(NULL));
+    while (t > T_end){
+        while (iter < AS_max){
+            iter ++;
+            new_solution = generate_neighbor(&curr_solution, dataset); // new_solution = s''
+            int old_score = avaliate_solution(&curr_solution, dataset);
+            int new_score = avaliate_solution(&new_solution, dataset);
+            int delta = new_score - old_score;
+            if (delta > 0){
+                curr_solution = new_solution;
+                int best_score = avaliate_solution(&best_solution, dataset); 
+                if (new_score > best_score){
+                    best_solution = curr_solution;
+                    cout << "Found better solution: R$" << best_score << endl;
+                }
+            }else{
+                double rand_between_0_1 = static_cast<double>(rand()) / RAND_MAX;
+                if( rand_between_0_1 < exp( -delta/t ) )
+                    curr_solution = new_solution;
+            }
+        }
+        t = alpha * t;
+        iter = 0;
+    } 
+
+    return best_solution;
 }

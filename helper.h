@@ -31,6 +31,7 @@ std::vector<int> constructive(file_records*);
 
 int avaliate_solution(std::vector<int>*, file_records*);
 std::vector<int> generate_neighbor(std::vector<int>*, file_records*);
-// std::vector<int> simulated_annealing(file_records&);
+std::vector<int> simulated_annealing(int, int, int, double, file_records*);
+std::unordered_map<std::string, std::string> read_config_file(const std::string&);
 
 #endif
