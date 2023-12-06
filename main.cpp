@@ -27,7 +27,7 @@ int main()
     for (auto &pair : dict)
     {
 
-        Solution sol(pair.first);
+        // Solution sol(pair.first);
 
         std::vector<double> durations;
         std::vector<int> scores;
@@ -35,6 +35,8 @@ int main()
 
         for (auto &path : pair.second)
         {
+            int repeatCounter = 1;
+            Solution solution(pair.first + "_" + std::to_string(counter), pair.first); // 500_1, 500_2
             std::cout << std::endl;
             file_records dataset = read_entry_file(path);
             int AS_max = stoi(config["AS_max"]);
@@ -42,32 +44,31 @@ int main()
             int T_end = stoi(config["T_end"]);
             double alpha = stod(config["alpha"]);
 
-            auto start = std::chrono::high_resolution_clock::now();
-            vector<int> final_solution = simulated_annealing(AS_max, T_end, t_0, alpha, &dataset);
-            auto finish = std::chrono::high_resolution_clock::now();
+            while (repeatCounter <= 10)
+            {
+                auto start = std::chrono::high_resolution_clock::now();
+                vector<int> final_solution = simulated_annealing(AS_max, T_end, t_0, alpha, &dataset);
+                auto finish = std::chrono::high_resolution_clock::now();
 
-            std::chrono::duration<double> duration = finish - start;
+                std::chrono::duration<double> duration = finish - start;
 
-            int final_score = avaliate_solution(&final_solution, &dataset);
+                int final_score = avaliate_solution(&final_solution, &dataset);
 
-            SolutionItem solutionItem(std::to_string(counter), final_score, duration.count());
+                SolutionItem solutionItem(pair.first + "_" + std::to_string(counter) + "_" + std::to_string(repeatCounter), final_score, duration.count());
 
-            sol.addSolutionItem(solutionItem);
+                solution.addSolutionItem(solutionItem);
 
-            cout << "Final solution: R$" << final_score << endl;
+                cout << "Final solution: R$" << final_score << endl;
+
+                repeatCounter++;
+            }
+            solutions.push_back(solution);
             counter++;
         }
-
-        solutions.push_back(sol);
-    }
-
-    for (auto &solution : solutions)
-    {
-        solution.writeItemsToFile();
     }
 
     std::ofstream solutionsFile("solutions_summary.csv");
-    solutionsFile << "Qty, Best Solution, Average Solution, Standard Deviation, Average Time, Average Time SD\n";
+    solutionsFile << "Name, Qty, Best Solution, Average Solution, Standard Deviation, Average Time, Average Time SD\n";
     for (auto &solution : solutions)
     {
         solution.writePropertiesToFile(solutionsFile);

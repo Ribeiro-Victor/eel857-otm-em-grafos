@@ -15,7 +15,8 @@ file_records read_entry_file(string filename)
     ifstream file(filename);
     if (!file.is_open())
     {
-        cerr << "Erro ao abrir o arquivo." << endl;
+        cerr << "Erro ao abrir o arquivo." << endl
+             << filename << endl;
         exit(1);
     }
 
@@ -272,12 +273,126 @@ vector<int> generate_neighbor(vector<int> *solution, file_records *dataset)
     return new_solution;
 }
 
+// vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, file_records *dataset)
+// {
+//     vector<int> curr_solution = constructive(dataset); // curr_solution = s'
+//     cout << "Initial solution: R$" << avaliate_solution(&curr_solution, dataset) << endl;
+//     vector<int> best_solution = curr_solution; // best_solution = s*
+
+//     int iter = 0;
+//     int t = t_0;
+//     vector<int> new_solution;
+//     srand((unsigned)time(NULL));
+//     while (t > T_end)
+//     {
+//         while (iter < AS_max)
+//         {
+//             iter++;
+//             new_solution = generate_neighbor(&curr_solution, dataset); // new_solution = s''
+//             int old_score = avaliate_solution(&curr_solution, dataset);
+//             int new_score = avaliate_solution(&new_solution, dataset);
+//             int delta = new_score - old_score;
+//             if (delta > 0)
+//             {
+//                 curr_solution = new_solution;
+//                 int best_score = avaliate_solution(&best_solution, dataset);
+//                 if (new_score > best_score)
+//                 {
+//                     best_solution = curr_solution;
+//                     // cout << "Found better solution: R$" << new_score << endl;
+//                 }
+//             }
+//             else
+//             {
+//                 double rand_between_0_1 = static_cast<double>(rand()) / RAND_MAX;
+//                 if (rand_between_0_1 < exp(-delta / t))
+//                     curr_solution = new_solution;
+//             }
+//         }
+//         t = alpha * t;
+//         iter = 0;
+//     }
+
+//     return best_solution;
+// }
+
+vector<int> greedy_fill(vector<int> *solution, file_records *dataset)
+{
+    bool item_added;
+
+    do
+    {
+        item_added = false;
+        int best_value_increase = 0;
+        int best_item_index = -1;
+
+        for (int i = 0; i < solution->size(); i++)
+        {
+            if (solution->at(i) == 0)
+            {
+                vector<int> potential_solution = *solution;
+                potential_solution[i] = 1;
+
+                if (get_solution_weight(&potential_solution, dataset) <= dataset->knapsack_capacity)
+                {
+                    int current_value = avaliate_solution(solution, dataset);
+                    int new_value = avaliate_solution(&potential_solution, dataset);
+                    int value_increase = new_value - current_value;
+
+                    if (value_increase > best_value_increase)
+                    {
+                        best_value_increase = value_increase;
+                        best_item_index = i;
+                    }
+                }
+            }
+        }
+
+        if (best_item_index != -1)
+        {
+            solution->at(best_item_index) = 1;
+            item_added = true;
+        }
+
+    } while (item_added);
+
+    return *solution;
+}
+
+void remove_elements(vector<int> *solution, int number_of_elements)
+{
+    vector<int> indices_with_items;
+
+    for (int i = 0; i < solution->size(); i++)
+    {
+        if (solution->at(i) == 1)
+        {
+            indices_with_items.push_back(i);
+        }
+    }
+
+    for (int i = 0; i < number_of_elements; i++)
+    {
+        if (!indices_with_items.empty())
+        {
+            int random_index = rand() % indices_with_items.size();
+            int item_to_remove = indices_with_items[random_index];
+
+            solution->at(item_to_remove) = 0;
+
+            indices_with_items.erase(indices_with_items.begin() + random_index);
+        }
+    }
+}
+
 vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, file_records *dataset)
 {
     vector<int> curr_solution = constructive(dataset); // curr_solution = s'
     cout << "Initial solution: R$" << avaliate_solution(&curr_solution, dataset) << endl;
     vector<int> best_solution = curr_solution; // best_solution = s*
 
+    int reheatLimit = 3;
+    int reheatCounter = 0;
     int iter = 0;
     int t = t_0;
     vector<int> new_solution;
@@ -287,7 +402,7 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
         while (iter < AS_max)
         {
             iter++;
-            new_solution = generate_neighbor(&curr_solution, dataset); // new_solution = s''
+            new_solution = generate_neighbor(&curr_solution, dataset);
             int old_score = avaliate_solution(&curr_solution, dataset);
             int new_score = avaliate_solution(&new_solution, dataset);
             int delta = new_score - old_score;
@@ -298,7 +413,6 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
                 if (new_score > best_score)
                 {
                     best_solution = curr_solution;
-                    // cout << "Found better solution: R$" << new_score << endl;
                 }
             }
             else
@@ -307,6 +421,22 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
                 if (rand_between_0_1 < exp(-delta / t))
                     curr_solution = new_solution;
             }
+        }
+
+        if (t - T_end <= 100 && reheatCounter < reheatLimit)
+        {
+
+            remove_elements(&curr_solution, 3);
+
+            curr_solution = greedy_fill(&curr_solution, dataset);
+
+            t = t_0 * 0.8 - (reheatCounter * 100);
+
+            reheatCounter++;
+        }
+        else
+        {
+            t = alpha * t;
         }
         t = alpha * t;
         iter = 0;

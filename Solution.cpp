@@ -83,6 +83,7 @@ class Solution
 {
 private:
     std::string name;
+    std::string qty;
     int bestSolution;
     double avgSolution;
     double standardDeviation;
@@ -94,15 +95,16 @@ private:
     std::vector<double> durations;
 
 public:
-    explicit Solution(std::string name)
-        : name(std::move(name)), bestSolution(0), avgSolution(0), standardDeviation(0), avgTime(0), avgTimeStandardDeviation(0)
+    explicit Solution(std::string name, std::string qty)
+        : name(std::move(name)), qty(std::move(qty)), bestSolution(0), avgSolution(0), standardDeviation(0), avgTime(0), avgTimeStandardDeviation(0)
     {
     }
 
-    Solution(std::string name, int bestSolution, double avgSolution, double standardDeviation, double avgTime, double avgTimeStandardDeviation)
-        : name(name), bestSolution(bestSolution), avgSolution(avgSolution), standardDeviation(standardDeviation), avgTime(avgTime), avgTimeStandardDeviation(avgTimeStandardDeviation) {}
+    Solution(std::string name, std::string qty, int bestSolution, double avgSolution, double standardDeviation, double avgTime, double avgTimeStandardDeviation)
+        : name(name), qty(qty), bestSolution(bestSolution), avgSolution(avgSolution), standardDeviation(standardDeviation), avgTime(avgTime), avgTimeStandardDeviation(avgTimeStandardDeviation) {}
 
     std::string getName() const { return name; }
+    std::string getQty() const { return qty; }
     int getBestSolution() const { return getMaxElement(getScores()); }
     double getAvgSolution() const { return calculateAverage(getScores()); }
     double getStandardDeviation() const { return calculateStandardDeviation(getScores()); }
@@ -161,7 +163,7 @@ public:
 
     void writePropertiesToFile(std::ofstream &file)
     {
-        file << name << getBestSolution() << ", " << getAvgSolution() << ", " << getStandardDeviation() << ", "
+        file << name << ", " << qty << ", " << getBestSolution() << ", " << getAvgSolution() << ", " << getStandardDeviation() << ", "
              << getAvgTime() << ", " << getAvgTimeStandardDeviation() << "\n";
     }
 };
