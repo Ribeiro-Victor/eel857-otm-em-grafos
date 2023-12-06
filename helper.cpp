@@ -262,8 +262,8 @@ vector<int> generate_neighbor_destroying(vector<int>* solution, file_records* da
     }
 
     // Determine the percentage of items to remove (between 5% and 10%)
-    double minPercentage = 0.05;
-    double maxPercentage = 0.10;
+    double minPercentage = 0.01;
+    double maxPercentage = 0.01;
     double range = maxPercentage - minPercentage;
     double removalPercentage = minPercentage + static_cast<double>(rand()) / RAND_MAX * range;
     int numToRemove = static_cast<int>(removalPercentage * indicesInSolution.size());
@@ -272,8 +272,10 @@ vector<int> generate_neighbor_destroying(vector<int>* solution, file_records* da
     set<int> indicesToRemove;
     while (indicesToRemove.size() < numToRemove && !indicesInSolution.empty()) {
         int randomIndex = rand() % indicesInSolution.size();
-        indicesToRemove.insert(indicesInSolution[randomIndex]);
-        indicesInSolution.erase(indicesInSolution.begin() + randomIndex);
+        auto insertResult = indicesToRemove.insert(indicesInSolution[randomIndex]);
+        // Check if the insertion actually occurred (not a duplicate)
+        if (insertResult.second) 
+            indicesInSolution.erase(indicesInSolution.begin() + randomIndex);
     }
 
     // Remove items at the selected indices
@@ -289,8 +291,10 @@ vector<int> generate_neighbor_destroying(vector<int>* solution, file_records* da
     set<int> indicesToInsert;
     while (indicesToInsert.size() < numToInsert && !indicesOutSolution.empty()) {
         int randomIndex = rand() % indicesOutSolution.size();
-        indicesToInsert.insert(indicesOutSolution[randomIndex]);
-        indicesOutSolution.erase(indicesOutSolution.begin() + randomIndex);
+        auto insertResult = indicesToInsert.insert(indicesOutSolution[randomIndex]);
+        // Check if the insertion actually occurred (not a duplicate)
+        if (insertResult.second) 
+            indicesOutSolution.erase(indicesOutSolution.begin() + randomIndex);
     }
 
     // Insert items at the selected indices
