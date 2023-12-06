@@ -31,5 +31,11 @@ int main() {
     vector<int> final_solution = simulated_annealing(AS_max, T_end, t_0, alpha, &dataset);
     cout << "Final solution: R$" << avaliate_solution(&final_solution, &dataset) << endl;
     
+    // Generate first solution
+    // vector<int> solution = constructive(&dataset);
+    // cout << "primeira solução: " << avaliate_solution(&solution, &dataset) << endl;
+    // vector<int> new_sol = generate_neighbor_destroying(&solution, &dataset);
+    // cout << "vizinho destruindo x%: " << avaliate_solution(&new_sol, &dataset) << endl;
+
     return 0;
 }
