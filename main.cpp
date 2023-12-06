@@ -8,7 +8,6 @@ int main()
 
     // Read files
     unordered_map<string, string> config = read_config_file("config.txt");
-    file_records dataset = read_entry_file(config["dataset_file"]);
 
     std::initializer_list<std::string> files_500 = {"sum_instances/500/kpf_1_sum.txt", "sum_instances/500/kpf_2_sum.txt", "sum_instances/500/kpf_3_sum.txt", "sum_instances/500/kpf_4_sum.txt", "sum_instances/500/kpf_5_sum.txt", "sum_instances/500/kpf_6_sum.txt", "sum_instances/500/kpf_7_sum.txt", "sum_instances/500/kpf_8_sum.txt", "sum_instances/500/kpf_9_sum.txt", "sum_instances/500/kpf_10_sum.txt"};
     std::initializer_list<std::string> files_700 = {"sum_instances/700/kpf_1_sum.txt", "sum_instances/700/kpf_2_sum.txt", "sum_instances/700/kpf_3_sum.txt", "sum_instances/700/kpf_4_sum.txt", "sum_instances/700/kpf_5_sum.txt", "sum_instances/700/kpf_6_sum.txt", "sum_instances/700/kpf_7_sum.txt", "sum_instances/700/kpf_8_sum.txt", "sum_instances/700/kpf_9_sum.txt", "sum_instances/700/kpf_10_sum.txt"};
@@ -33,8 +32,11 @@ int main()
         std::vector<double> durations;
         std::vector<int> scores;
         int counter = 1;
-        for (auto &str : pair.second)
+
+        for (auto &path : pair.second)
         {
+            std::cout << std::endl;
+            file_records dataset = read_entry_file(path);
             int AS_max = stoi(config["AS_max"]);
             int t_0 = stoi(config["t_0"]);
             int T_end = stoi(config["T_end"]);
