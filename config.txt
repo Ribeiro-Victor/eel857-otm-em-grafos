@@ -1,5 +1,5 @@
 
-AS_max  = 70
+AS_max  = 50
 t_0     = 1000
 T_end   = 100
 alpha   = 0.1
