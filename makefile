@@ -2,7 +2,7 @@ CXX = g++				# Compilador C++
 CXXFLAGS = -std=c++11 	# Versão do C++ e flags
 SRC_FILES = main.cpp helper.cpp
 OBJ_FILES = $(SRC_FILES:.cpp=.o)
-OUTPUT = output.out
+OUTPUT = output.exe
 
 all: $(OUTPUT)
 
