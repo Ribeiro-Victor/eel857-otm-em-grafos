@@ -283,7 +283,6 @@ vector<int> generate_neighbor_destroying(vector<int> *solution, file_records *da
     vector<int> new_solution;
     new_solution = *solution;
 
-
     vector<int> indicesInSolution;
     vector<int> indicesOutSolution;
     for (int i = 0; i < solution->size(); ++i)
@@ -582,3 +581,4 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
         t = alpha * t;
         iter = 0;
     }
+}
