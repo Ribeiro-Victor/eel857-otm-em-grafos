@@ -1,9 +1,9 @@
 
 
-AS_max  = 20
+AS_max  = 50
 t_0     = 1000
 T_end   = 100
 alpha   = 0.5
-gamma   = 20
+gamma   = 10
 lambda  = 10
 mi      = 10
