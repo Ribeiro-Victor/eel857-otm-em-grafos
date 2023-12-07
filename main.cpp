@@ -37,7 +37,7 @@ int main()
         {
             int repeatCounter = 1;
             Solution solution(pair.first + "_" + std::to_string(counter), pair.first); // 500_1, 500_2
-            std::cout << std::endl;
+            std::cout << pair.first + "_" + std::to_string(counter) << std::endl;
             file_records dataset = read_entry_file(path);
             int AS_max = stoi(config["AS_max"]);
             int t_0 = stoi(config["t_0"]);
