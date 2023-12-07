@@ -385,7 +385,97 @@ void remove_elements(vector<int> *solution, int number_of_elements)
     }
 }
 
-vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, file_records *dataset)
+vector<int> local_search(vector<int>* solution, file_records* dataset) {
+    int n = solution->size();
+    int a, b, c, d, a_total_penalty, b_total_penalty = 0;
+    vector<int> new_solution = *solution;
+    
+
+    // Randomly removes an item from the solution
+    a = rand() % n;
+    new_solution.erase(new_solution.begin() + a);
+    
+    // Calculates weight
+    int original_solution_weight = get_solution_weight(solution, dataset);
+    int current_space = original_solution_weight - dataset->items[a].weight;
+    
+    // Randomly chooses two items to swap.
+    while(solution->at(a) == solution->at(b)) {
+        a = rand() % n;
+        b = rand() % n;
+    }
+
+    // For each 'a' penalty pair
+    for (auto pair: dataset->items[a].penalties){
+        // If the item is in the solution
+        // and the item is not 'b'
+        if (solution->at(pair.first) == 1 && pair.first != b)
+            // Increment a_total_penalty
+            a_total_penalty += pair.second;
+    }
+
+    // For each 'b' penalty pair
+    for (auto pair: dataset->items[b].penalties){
+        // If the item is in the solution
+        // and the item is not 'a'
+        if (solution->at(pair.first) == 1 && pair.first != a)
+            // Increment b_total_penalty
+            b_total_penalty += pair.second;
+    }
+
+    // If it's worth it
+    if (a_total_penalty > b_total_penalty) {
+        // Make swap
+        new_solution[a] = !new_solution[a];
+        new_solution[b] = !new_solution[b];
+    }
+    
+    return new_solution;
+}
+
+// Função para calcular a Hamming Distance entre dois vetores binários
+int hamming_distance(std::vector<int> *v1, std::vector<int> *v2) {
+    // Verificar se os vetores têm o mesmo tamanho
+    if (v1->size() != v2->size()) {
+        std::cerr << "Erro: Os vetores devem ter o mesmo tamanho." << std::endl;
+        return -1;  // Valor de retorno indicando erro
+    }
+
+    int distance = 0;
+
+    // Calcular a Hamming Distance
+    for (size_t i = 0; i < v1->size(); ++i) {
+        if (v1[i] != v2[i]) {
+            distance++;
+        }
+    }
+
+    return distance;
+}
+
+// Função para encontrar o índice do vetor com a menor Hamming Distance em relação a curr_solution
+int findClosestSolutionIndex(vector<Cluster> *clusters, vector<int> *curr_solution) {
+    int minDistance = std::numeric_limits<int>::max();
+    int closestSolutionIndex = -1;
+    vector<int> center_solution;
+
+
+    // Iterar sobre todos os clusters
+    for (int i = 0; i < clusters->size(); ++i) {
+        center_solution = clusters->at(i).get_center_solution();
+        int distance = hamming_distance(&center_solution, curr_solution);
+
+        // Atualizar o índice mais próximo se encontrarmos uma distância menor
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestSolutionIndex = static_cast<int>(i);
+        }
+    }
+
+    return closestSolutionIndex;
+}
+
+vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, int cluster_volume_threshold, int max_number_of_clusters, int max_inefficiency_index, file_records *dataset)
 {
     vector<int> curr_solution = constructive(dataset); // curr_solution = s'
     cout << "Initial solution: R$" << avaliate_solution(&curr_solution, dataset) << endl;
@@ -395,16 +485,21 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
     int reheatCounter = 0;
     int iter = 0;
     int t = t_0;
+    int old_score, new_score = 0;
+    int i = 0;
     vector<int> new_solution;
+    vector<Cluster> clusters;
+    vector<int> center_solution;
     srand((unsigned)time(NULL));
+
     while (t > T_end)
     {
         while (iter < AS_max)
         {
             iter++;
             new_solution = generate_neighbor(&curr_solution, dataset);
-            int old_score = avaliate_solution(&curr_solution, dataset);
-            int new_score = avaliate_solution(&new_solution, dataset);
+            old_score = avaliate_solution(&curr_solution, dataset);
+            new_score = avaliate_solution(&new_solution, dataset);
             int delta = new_score - old_score;
             if (delta > 0)
             {
@@ -437,10 +532,60 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
         else
         {
             t = alpha * t;
+            iter = 0;
         }
-        t = alpha * t;
-        iter = 0;
+
+        // Cluster é uma tupla (ci, vi, ri)
+        // ci (center) repesenta a melhor solução no cluster i
+        // vi (volume) indica o número de soluções atribuídas a um cluster i,
+        // ri (inefficiency index) está  relacionado ao numero de vezes que o cluster i esteve promissor mas gerou uma
+        // melhora a partir de uma busca local nele.
+
+        // Uma solução é gerada e atribuída ao cluster mais similar i considerando a métrica de similaridade.
+        // Cluster i se torna promissor quando um volume vi atinge o threshold lambda, e uma perturbação é aplicada ao
+        // centro ci quando uma busca local roda 'mi' vezes sem gerar melhoria.
+        
+        // gamma: Número de clusters
+        // lambda: Limite de volume do cluster
+        // mi: limite de ineficiência do cluster
+        
+        // Se o número máximo de clusters ainda não foi atingido
+        if (clusters.size() < max_number_of_clusters) {// 15 if clt < γ then
+            // Criar novo cluster com a solução
+            // 16 clt ← clt + 1; vclt ← vclt + 1; cclt ← s;
+            Cluster cluster(curr_solution);
+            clusters.push_back(cluster);
+        } else { // 17 else
+            // Incluir solução num cluster seguindo critérios de semelhança
+            // Se um cluster for promissor, aplicar perturbação ou busca local em ci (centro)
+            // 18 i← min [Hi(s)]; vi ← vi + 1; ci ← Best(ci, s);
+            i = findClosestSolutionIndex(&clusters, &curr_solution);
+            clusters[i].add_solution(curr_solution);
+            if (clusters[i].get_volume() == cluster_volume_threshold) {// 19 if vi = λ then
+                // 20 vi ← 1;
+                clusters[i].clear_cluster();
+                center_solution = clusters[i].get_center_solution();
+                if (clusters[i].get_inefficiency_index() == max_inefficiency_index) {// 21 if ri = μ then
+                    // 22 ri ← 0; ci ← ψ(ci);
+                    clusters[i].reset_inefficiency_index();
+                    clusters[i].set_center_solution(generate_neighbor(&center_solution, dataset));
+                } else {// 23 else
+                    // 24 ci ← Local Search(ci);
+                    clusters[i].set_center_solution(local_search(&center_solution, dataset));
+                    // 25 if ci is improved then ri ← 0; else ri ← ri + 1; end
+                    if (avaliate_solution(&center_solution, dataset) > new_score) {
+                        clusters[i].reset_inefficiency_index();
+                    } else {
+                        clusters[i].update_inefficiency_index();
+                    }
+                }// 26 end
+                // 27 Update the best solution found (s*, ci);
+                best_solution = center_solution;
+            } // 28 end
+        } // 29 end
+
     }
 
     return best_solution;
 }
+
