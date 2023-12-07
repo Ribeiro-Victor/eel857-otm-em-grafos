@@ -578,8 +578,7 @@ vector<int> simulated_annealing(int AS_max, int T_end, int t_0, double alpha, fi
         else
         {
             t = alpha * t;
+            iter = 0;
         }
-        t = alpha * t;
-        iter = 0;
-    }
+        }
 }
