@@ -43,11 +43,14 @@ int main()
             int t_0 = stoi(config["t_0"]);
             int T_end = stoi(config["T_end"]);
             double alpha = stod(config["alpha"]);
+            int gamma = stod(config["gamma"]);
+            int lambda = stod(config["lambda"]);
+            int mi = stod(config["mi"]);
 
             while (repeatCounter <= 10)
             {
                 auto start = std::chrono::high_resolution_clock::now();
-                vector<int> final_solution = simulated_annealing(AS_max, T_end, t_0, alpha, &dataset);
+                vector<int> final_solution = simulated_annealing(AS_max, T_end, t_0, alpha, lambda, gamma, mi, &dataset);
                 auto finish = std::chrono::high_resolution_clock::now();
 
                 std::chrono::duration<double> duration = finish - start;
